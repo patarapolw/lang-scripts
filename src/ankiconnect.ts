@@ -292,7 +292,10 @@ export interface AnkiConnectActions
 export class AnkiConnect {
   $api: AxiosInstance;
 
-  constructor(public baseURL = 'http://localhost:8765', public version = 6) {
+  constructor(
+    public baseURL = 'http://localhost:8765',
+    public version = 6,
+  ) {
     this.$api = axios.create({
       baseURL,
     });
