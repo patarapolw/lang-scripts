@@ -177,29 +177,56 @@ export class Tatoeba {
       });
     });
   }
+
+  search(word: string, lang = 'cmn', limit = 10) {
+    const ids = this.db
+      .prepare(
+        word.includes('%')
+          ? /* sql */ `SELECT id FROM sentence WHERE lang = '${lang}' AND full LIKE '${word}' LIMIT ${limit}`
+          : /* sql */ `SELECT rowid id FROM sentence_fts ('word:${word} lang:${lang}') LIMIT ${limit}`,
+      )
+      .all()
+      .map((r: any) => r.id);
+
+    let pairs: any[] = [];
+
+    if (lang < 'eng') {
+      pairs = this.db
+        .prepare(
+          /* sql */ `SELECT id1 ${lang}, id2 eng FROM links WHERE id1 IN (${ids}) AND lang2 = 'eng'`,
+        )
+        .all();
+    } else {
+      pairs = this.db
+        .prepare(
+          /* sql */ `SELECT id2 ${lang}, id1 eng FROM links WHERE id2 IN (${ids}) AND lang1 = 'eng'`,
+        )
+        .all();
+    }
+
+    if (pairs.length) {
+      const m = new Map<number, string>();
+      this.db
+        .prepare(
+          /* sql */ `SELECT id, full FROM sentence WHERE id IN (${pairs.flatMap(
+            (r) => [r[lang], r.eng],
+          )})`,
+        )
+        .all()
+        .map((r: any) => {
+          m.set(r.id, r.full);
+        });
+      return pairs.map((r) => ({
+        [lang]: m.get(r[lang])!,
+        eng: m.get(r.eng)!,
+      }));
+    }
+    return [];
+  }
 }
 
 (async function main() {
   const t = new Tatoeba();
   // await t.create();
-  console.log(
-    t.db
-      .prepare(
-        /* sql */ `
-      SELECT
-        s1.full cmn,
-        s1.word,
-        s2.full eng
-      FROM links
-      JOIN sentence s1 ON id1 = s1.id
-      JOIN sentence s2 ON id2 = s2.id
-      WHERE id1 IN (
-        -- SELECT id FROM sentence WHERE lang = 'cmn' AND full LIKE '%你好%' LIMIT 10
-        SELECT rowid FROM sentence_fts ('word:你好 lang:cmn') LIMIT 10
-      ) AND lang2 = 'eng'
-      GROUP BY cmn
-      `,
-      )
-      .all(),
-  );
+  console.log(t.search('CD', 'jpn'));
 })();
