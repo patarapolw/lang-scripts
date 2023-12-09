@@ -78,6 +78,11 @@
     progress "^2.0.3"
     tar "^6.1.6"
 
+"@scriptin/jmdict-simplified-types@^3.5.0":
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/@scriptin/jmdict-simplified-types/-/jmdict-simplified-types-3.5.0.tgz#c08345979f040e7bec67ed3c65bec9785158123b"
+  integrity sha512-cs2vQv2U8cCKGHHRbbxBvozfboBOA4HOpofr/81H+F7i3RK/LmWCrDkW3LCS7mFYpfrxstlSD2YyCzHMz0avxQ==
+
 "@tsconfig/node10@^1.0.7":
   version "1.0.9"
   resolved "https://registry.yarnpkg.com/@tsconfig/node10/-/node10-1.0.9.tgz#df4907fc07a886922637b15e02d4cebc4c0021b2"
@@ -1207,6 +1212,16 @@ v8-compile-cache-lib@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/v8-compile-cache-lib/-/v8-compile-cache-lib-3.0.1.tgz#6336e8d71965cb3d35a1bbb7868445a7c05264bf"
   integrity sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==
+
+wakachigaki@^1.3.2:
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/wakachigaki/-/wakachigaki-1.3.2.tgz#c095291c6b839cbff893aa0c3c43232a055986ef"
+  integrity sha512-SoilC4WHIV27RPKNUEgw9ZhTWTr9e18DCZerqnS5vpqaCO+eDI1vjnRxEXBzPnojWN8v9o9YwZEAwo6WgryUrw==
+
+wasmjieba-nodejs@^1.0.11:
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/wasmjieba-nodejs/-/wasmjieba-nodejs-1.0.11.tgz#46291c042841a2d7d4982c1d1abc4d544ed45165"
+  integrity sha512-SCea/CoYalw1cUrbjdzx9EvwgF9S6fZedo1GCNyOHg5UsJNt3v8n37WiQpJY7p6dJdGzNEd0EcSmCi2XHXnwrA==
 
 webidl-conversions@^3.0.0:
   version "3.0.1"

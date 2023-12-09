@@ -25,7 +25,7 @@ export class Cedict {
     `);
   }
 
-  async create(): Promise<this> {
+  async create() {
     this.db.exec(/* sql */ `DELETE FROM mdbg;`);
 
     const batchSize = 100;

@@ -1,0 +1,6 @@
+# From https://github.com/scriptin/jmdict-simplified/releases
+jmdict-*.json
+jmnedict-*.json
+kanjidic2-*.json
+kradfile-*.json
+radkfile-*.json
