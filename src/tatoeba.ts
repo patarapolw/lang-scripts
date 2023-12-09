@@ -24,11 +24,34 @@ export class Tatoeba {
 
       CREATE INDEX IF NOT EXISTS idx_links_lang ON links(lang1, lang2);
 
-      CREATE VIRTUAL TABLE IF NOT EXISTS sentence USING fts5 (
-        lang,
-        full UNINDEXED,
-        word
+      CREATE TABLE IF NOT EXISTS sentence (
+        id      INTEGER NOT NULL,
+        full    TEXT NOT NULL,
+        word    TEXT NOT NULL,
+        lang    TEXT NOT NULL,
+        PRIMARY KEY (id)
       );
+
+      CREATE INDEX IF NOT EXISTS idx_sentence_full ON sentence(full);
+      CREATE INDEX IF NOT EXISTS idx_sentence_lang ON sentence(lang);
+
+      CREATE VIRTUAL TABLE IF NOT EXISTS sentence_fts USING fts5 (
+        word,
+        lang,
+        content='sentence',
+        content_rowid='id'
+      );
+
+      CREATE TRIGGER IF NOT EXISTS tx_sentence_ai AFTER INSERT ON sentence
+      WHEN new.lang != 'eng'
+      BEGIN
+        INSERT INTO sentence_fts(rowid, word, lang) VALUES (new.id, new.word, new.lang);
+      END;
+      CREATE TRIGGER IF NOT EXISTS tx_sentence_ad AFTER DELETE ON sentence
+      WHEN old.lang != 'eng'
+      BEGIN
+        INSERT INTO sentence_fts(sentence_fts, rowid, word, lang) VALUES('delete', old.id, old.word, old.lang);
+      END;
     `);
   }
 
@@ -54,12 +77,12 @@ export class Tatoeba {
     this.db
       .prepare(
         /* sql */ `
-    SELECT rowid, lang FROM sentence;
-    `,
+        SELECT id, lang FROM sentence;
+        `,
       )
       .all()
       .map((r: any) => {
-        idToLang.set(r.rowid, r.lang);
+        idToLang.set(r.id, r.lang);
       });
 
     const stack: any[] = [];
@@ -111,13 +134,13 @@ export class Tatoeba {
     const stack: any[] = [];
     const stackBatch = 1000;
     const stmt = this.db.prepare(/* sql */ `
-          INSERT INTO sentence (rowid, lang, full, word) VALUES (@id, @lang, @full, @word);
-        `);
+      INSERT INTO sentence (id, full, word, lang) VALUES (@id, @full, @word, @lang);
+    `);
     const commitStack = this.db.transaction((ss: any[]) => {
       ss.map((s) => stmt.run(s));
     });
 
-    const reWord = /[\p{L}\p{N}]/g;
+    const reWord = /[\p{L}\p{N}]/u;
 
     rl.on('line', (row) => {
       const [idStr, lang, full = ''] = row.split('\t');
@@ -125,7 +148,7 @@ export class Tatoeba {
 
       if (!id) return;
 
-      let word = full;
+      let word = '';
       switch (lang) {
         case 'cmn':
           word = jieba
@@ -158,5 +181,25 @@ export class Tatoeba {
 
 (async function main() {
   const t = new Tatoeba();
-  await t.create();
+  // await t.create();
+  console.log(
+    t.db
+      .prepare(
+        /* sql */ `
+      SELECT
+        s1.full cmn,
+        s1.word,
+        s2.full eng
+      FROM links
+      JOIN sentence s1 ON id1 = s1.id
+      JOIN sentence s2 ON id2 = s2.id
+      WHERE id1 IN (
+        -- SELECT id FROM sentence WHERE lang = 'cmn' AND full LIKE '%你好%' LIMIT 10
+        SELECT rowid FROM sentence_fts ('word:你好 lang:cmn') LIMIT 10
+      ) AND lang2 = 'eng'
+      GROUP BY cmn
+      `,
+      )
+      .all(),
+  );
 })();
