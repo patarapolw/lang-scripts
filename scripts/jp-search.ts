@@ -44,12 +44,12 @@ async function addImKit(db: ConnectionPool) {
 
     while (rows.length) {
       await db.query(
-        sql`INSERT INTO sentence ("text", "source") VALUES ${sql.join(
+        sql`INSERT INTO sentence ("text", "source", "line") VALUES ${sql.join(
           rows.splice(0, 10000).map((d) => {
-            return sql`(${d.sentence}, ${`${d.id}(${d.i + 1})`})`;
+            return sql`(${d.sentence}, ${`${d.id}`}, ${d.i})`;
           }),
           ',',
-        )} ON CONFLICT ("source") DO NOTHING`,
+        )} ON CONFLICT ("source","line") DO NOTHING`,
       );
     }
   }
@@ -70,12 +70,12 @@ async function addSubtitle(db: ConnectionPool) {
 
     while (rows.length) {
       await db.query(
-        sql`INSERT INTO sentence ("text", "source") VALUES ${sql.join(
+        sql`INSERT INTO sentence ("text", "source", "line") VALUES ${sql.join(
           rows.splice(0, 10000).map((d) => {
-            return sql`(${d.s}, ${`(${d.i + 1})${filename || f}`})`;
+            return sql`(${d.s}, ${`${filename || f}`}, ${d.i})`;
           }),
           ',',
-        )} ON CONFLICT ("source") DO NOTHING`,
+        )} ON CONFLICT ("source","line") DO NOTHING`,
       );
     }
   }
