@@ -55,13 +55,39 @@ async function addImKit(db: ConnectionPool) {
   }
 }
 
+async function addSubtitle(db: ConnectionPool) {
+  const reJa = /[\p{sc=Han}\p{sc=Katakana}\p{sc=Hiragana}]/u;
+
+  const cwd = 'C:\\Users\\Hp\\Documents\\Subtitles';
+  for await (const f of fg.stream('**/*.srt', { cwd, absolute: true })) {
+    const filename = (f as string).split('/').pop();
+    const rows = readFileSync(f, 'utf-8')
+      .split('\n')
+      .filter((s) => reJa.test(s))
+      .map((s, i) => {
+        return { s, i };
+      });
+
+    while (rows.length) {
+      await db.query(
+        sql`INSERT INTO sentence ("text", "source") VALUES ${sql.join(
+          rows.splice(0, 10000).map((d) => {
+            return sql`(${d.s}, ${`(${d.i + 1})${filename || f}`})`;
+          }),
+          ',',
+        )} ON CONFLICT ("source") DO NOTHING`,
+      );
+    }
+  }
+}
+
 async function main() {
   const db = createConnectionPool({
     connectionString: process.env['POSTGRES_URI'],
     bigIntMode: 'number',
   });
 
-  await addImKit(db);
+  await addSubtitle(db);
 
   await db.dispose();
 }
