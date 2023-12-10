@@ -2,6 +2,7 @@ import 'dotenv/config';
 
 import fg from 'fast-glob';
 import { readFileSync } from 'fs';
+import { createInterface } from 'readline';
 
 import { Tatoeba } from '@/tatoeba';
 import createConnectionPool, { ConnectionPool, sql } from '@databases/pg';
@@ -81,13 +82,50 @@ async function addSubtitle(db: ConnectionPool) {
   }
 }
 
+async function search(db: ConnectionPool) {
+  console.log('Please enter a search query:');
+  const rl = createInterface({
+    input: process.stdin,
+  });
+
+  rl.on('line', async (s) => {
+    if (!s) {
+      rl.close();
+      return;
+    }
+
+    const rs = await db.query(sql`
+    SELECT DISTINCT ON ("text") * FROM sentence WHERE "text" &@~ ${s} LIMIT 5
+    `);
+    if (!rs.length) {
+      console.log('Please enter a new query:');
+    }
+
+    for (const r of rs) {
+      if (r.line && r.source) {
+        const ts = await db.query(
+          sql`SELECT * FROM sentence WHERE source = ${
+            r.source
+          } AND line BETWEEN ${r.line - 2} AND ${r.line + 2}`,
+        );
+        r.text = ts.map((t) => t.text);
+      }
+      console.log(r);
+    }
+  });
+
+  return new Promise((resolve) => {
+    rl.once('close', resolve);
+  });
+}
+
 async function main() {
   const db = createConnectionPool({
     connectionString: process.env['POSTGRES_URI'],
     bigIntMode: 'number',
   });
 
-  await addSubtitle(db);
+  await search(db);
 
   await db.dispose();
 }
