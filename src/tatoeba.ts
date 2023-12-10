@@ -225,8 +225,10 @@ export class Tatoeba {
   }
 }
 
-(async function main() {
-  const t = new Tatoeba();
-  // await t.create();
-  console.log(t.search('CD', 'jpn'));
-})();
+if (require.main === module) {
+  (async function main() {
+    const t = new Tatoeba();
+    // await t.create();
+    console.log(t.search('CD', 'jpn'));
+  })();
+}
